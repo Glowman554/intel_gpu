@@ -1,4 +1,4 @@
-MODULE_NAME = example_module.o
+MODULE_NAME = intel_gpu.o
 
 USER_CFLAGS = -DDEBUG -Ilil/src
 
