@@ -110,6 +110,7 @@ found_connector:
 }
 
 void init() {
+    debugf("[INTEL GPU] module installed\n");
 	pci::register_pci_driver(0x8086, 0x0166, intel_gpu); // Intel 3rd Gen Core GPU (Ivy Bridge)
 	pci::register_pci_driver(0x8086, 0x5917, intel_gpu); // Intel 8th Gen Core GPU (Coffee Lake)
 }

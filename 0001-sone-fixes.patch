@@ -1,0 +1,116 @@
+From 319b6f3e7895528f1f2ec83d527398763186da04 Mon Sep 17 00:00:00 2001
+From: Glowman554 <glowman434@gmail.com>
+Date: Fri, 4 Aug 2023 00:40:32 +0200
+Subject: [PATCH] sone fixes
+
+---
+ include/lil/imports.h |  2 +-
+ utils/vbt/vbt.c       | 83 -------------------------------------------
+ 2 files changed, 1 insertion(+), 84 deletions(-)
+ delete mode 100644 utils/vbt/vbt.c
+
+diff --git a/include/lil/imports.h b/include/lil/imports.h
+index 326e763..4ce8c91 100644
+--- a/include/lil/imports.h
++++ b/include/lil/imports.h
+@@ -10,7 +10,7 @@ enum LilLogType {
+ 	VERBOSE,
+ };
+ 
+-void *memcpy(void *restrict dest, const void *restrict src, size_t n);
++void *memcpy(void * dest, const void * src, size_t n);
+ int memcmp(const void *s1, const void *s2, size_t n);
+ void *memset(void *s, int c, size_t n);
+ int strcmp(const char *s1, const char *s2);
+diff --git a/utils/vbt/vbt.c b/utils/vbt/vbt.c
+deleted file mode 100644
+index 5e9c07f..0000000
+--- a/utils/vbt/vbt.c
++++ /dev/null
+@@ -1,83 +0,0 @@
+-#include <lil/vbt.h>
+-
+-#include <assert.h>
+-#include <errno.h>
+-#include <fcntl.h>
+-#include <getopt.h>
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <string.h>
+-#include <sys/mman.h>
+-#include <sys/stat.h>
+-#include <unistd.h>
+-
+-static struct option longopts[] = {
+-	{"blocks", no_argument, 0, 'b'},
+-	{0, 0, 0, 0},
+-};
+-
+-int main(int argc, char *argv[]) {
+-	bool print_blocks = false;
+-
+-	while(1) {
+-		int option_index = 0;
+-		int c = getopt_long(argc, argv, "b", longopts, &option_index);
+-
+-		if(c == -1) {
+-			break;
+-		}
+-
+-		switch(c) {
+-			case 'b': {
+-				print_blocks = true;
+-				break;
+-			}
+-			default: {
+-				fprintf(stderr, "getopt_long returned %c\n", c);
+-				break;
+-			}
+-		}
+-	}
+-
+-	if((optind + 1) != argc) {
+-		fprintf(stderr, "no file given\n");
+-		exit(1);
+-	}
+-
+-	const char *filepath = argv[optind];
+-	int fd = open(filepath, O_RDONLY);
+-	if(fd < 0) {
+-		fprintf(stderr, "could not open file '%s': %s\n", argv[1], strerror(errno));
+-		exit(1);
+-	}
+-
+-	struct stat statbuf;
+-	int err = fstat(fd, &statbuf);
+-	assert(err >= 0);
+-
+-	void *vbt = mmap(NULL, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+-	assert(vbt != MAP_FAILED);
+-	close(fd);
+-
+-	const struct vbt_header *hdr = vbt_get_header(vbt, statbuf.st_size);
+-	assert(hdr);
+-
+-	printf("VBT header version %u.%u\n", hdr->version / 100, hdr->version % 100);
+-
+-	const struct bdb_header *bdb_hdr = vbt_get_bdb_header(hdr);
+-	assert(bdb_hdr);
+-
+-	if(print_blocks) {
+-		printf("Blocks:");
+-		for(size_t i = 0; i < 256; i++) {
+-			if(vbt_get_bdb_block(hdr, i)) {
+-				printf(" %zu", i);
+-			}
+-		}
+-		printf("\n");
+-	}
+-
+-	munmap(vbt, statbuf.st_size);
+-
+-	return 0;
+-}
+-- 
+2.34.1
+
